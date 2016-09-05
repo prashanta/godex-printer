@@ -1,0 +1,13 @@
+<svg width="19mm" height="52mm" style="border: 1px solid #CCC" data-template-name="test">
+
+    <rect x="0mm" y="0mm" width="74mm" height="48.5mm" style="stroke: #000000; fill: none;" stroke-width="0.3mm" />
+
+	<line x1="0mm" y1="25mm" x2="74mm" y2="25mm" stroke="red" stroke-width="0.25mm" fill="none" />
+
+    <text x="1mm" y="3.5mm" font-size= "2mm">Part Number</text>
+    <text x="1mm" y="10mm" font-size= "6mm">{PartNo}</text>
+    <text x="1mm" y="22mm" font-size= "8mm">#BA#-PartNo</text>
+    <text x="1mm" y="30mm" font-size= "2mm">QTY ({uom})</text>
+    <text x="1mm" y="36mm" font-size= "4mm">{Qty}</text>
+  	<text x="55mm" y="45mm" font-size= "1mm">#DATE#</text>
+</svg>

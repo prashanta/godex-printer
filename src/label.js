@@ -6,82 +6,102 @@ Contains methods that give GoDex EZPL commands for priting labels elements.
 */
 
 export default class Label{
-   constructor(opts){
-      // Print speed
-      this.speed = 2;
-      // Print darkness
-      this.darkness = 5;
-      // Left margin
-      this.leftMargin = 26;
-      // Rotate printing
-      this.rotate = 150;
-      // Row Offset
-      this.rowOffset = -25;
-      // Label width =
-      this.width = 80;
-      // Label length
-      this.length = 52;
-      // Label gap
-      this.gap = 2;
-      // Stop position
-      this.stopPos = 20;
-      // Copies
-      this.copies = 1;
+   constructor({  speed= 2,
+                  darkness= 5,
+                  leftMargin= 26,
+                  rotate= 150,
+                  rowOffset= -25,
+                  width= 80,
+                  length= 52,
+                  gap= 2,
+                  startPos= 20,
+                  copies= 1} = {}){
 
-      if(opts){
-         this.speed = opts.speed || this.sleed;
-         this.darkness = opts.darkness || this.darkness;
-         this.leftMargin = opts.leftMargin || this.leftMargin;
-         this.rotate = opts.rotate || this.rotate;
-         this.rowOffset = opts.rowOffset || this.rowOffset;
-         this.width = opts.width || this.width;
-         this.length = opts.length || this.length;
-         this.stopPos = opts.stopPos || this.stopPos;
-         this.copies = opts.copies || this.copies;
-      }
+      this.config = {speed: speed, darkness: darkness, leftMargin: leftMargin, rotate: rotate, rowOffset: rowOffset, width: width, length: length, gap: gap, startPos: startPos, copies: copies};
+
 
       this.cmd = {
-         speed : ()=>{return `^S${this.speed}\n`;},
-         darkness: ()=>{return `^H${this.darkness}\n`;},
-         leftMargin: ()=>{return `^R${this.leftMargin}\n`;},
-         rotate: ()=>{return `~R${this.rotate}\n`;},
-         rowOffset: ()=>{return `~Q${this.rowOffset}\n`;},
-         labelDim: ()=>{return `^W${this.width}\n^Q${this.length},${this.gap}\n`;},
-         startPos: ()=>{return `^E${this.startPos}\n`;},
-         copies: ()=>{return `^C${this.copies}\n`;},
-         startLabelNormal: ()=>{return '^L\n';},
-         startLabelInverse: ()=>{return '^LI\n';},
-         startLabelMirror: ()=>{return '^LM\n';},
-         startLabelRotate: (x)=>{return '^LR'+ x +'\n';},
+         speed : ()=>{return `^S${this.config.speed}\n`;},
+         darkness: ()=>{return `^H${this.config.darkness}\n`;},
+         leftMargin: ()=>{return `^R${this.config.leftMargin}\n`;},
+         rotate: ()=>{return `~R${this.config.rotate}\n`;},
+         rowOffset: ()=>{return `~Q${this.config.rowOffset}\n`;},
+         labelDim: ()=>{return `^W${this.config.width}\n^Q${this.config.length},${this.config.gap}\n`;},
+         startPos: ()=>{return `^E${this.config.startPos}\n`;},
+         copies: ()=>{return `^C${this.config.copies}\n`;},
+
+         startLabelNormal: ()=>{return '^L\n';},   // if mode = 0 || undefined
+         startLabelInverse: ()=>{return '^LI\n';}, // if mode = 1
+         startLabelMirror: ()=>{return '^LM\n';},  // if mode = 2
+         end: ()=>{return 'E\n';}
       };
 
       this.set = {
-         speed : x=>{this.speed = x;},
-         darkness : x=>{this.darkness = x;},
-         leftMargin : x=>{this.leftMargin = x;},
-         width : x=>{ this.width = x;},
-         length : x=>{this.length = x;},
-         gap : x=>{this.gap = x;},
-         copies: x=>{this.copies = x;}
+         speed : x=>{this.config.speed = x;},
+         darkness : x=>{this.config.darkness = x;},
+         leftMargin : x=>{this.config.leftMargin = x;},
+         rotate : x=>{this.config.rotate = x;},
+         rowOffset : x=>{this.config.rowOffset = x;},
+         width : x=>{ this.config.width = x;},
+         length : x=>{this.config.length = x;},
+         gap : x=>{this.config.gap = x;},
+         startPos : x=>{this.config.startPos = x;},
+         copies: x=>{this.config.copies = x;}
       };
+      this.labelCmd = '';
    }
 
+   addLabelCmd(command){
+      if(command)
+         this.labelCmd += command;
+   }
+
+   getPrintCommand(mode = 0){
+      var prefix =  this.cmd.speed() +
+                     this.cmd.darkness() +
+                     this.cmd.leftMargin() +
+                     this.cmd.rotate() +
+                     this.cmd.rowOffset() +
+                     this.cmd.labelDim() +
+                     this.cmd.startPos() +
+                     this.cmd.copies() +
+                     (mode===0? this.cmd.startLabelNormal() : (mode===1? this.cmd.startLabelInverse() : this.cmd.startLabelMirror()));
+      return prefix + this.labelCmd + this.cmd.end();
+   }
    // Horizontal line commmand
-   lineHor(x1,x2,y,t){
-      var y1 = y,
-          y2 = y+t;
-      return `La,${x1},${y1},${x2},${y2}\n`;
+   lineHor(xStart,xEnd,y,t){
+      var yStart = y, yEnd = y+t;
+      return `La,${xStart},${yStart},${xEnd},${yEnd}\n`;
+   }
+   addLineHor(xStart,xEnd,y,t){
+      this.labelCmd += this.lineHor(xStart,xEnd,y,t);
    }
 
    // Vertical line commmand
-   lineVer(x,y1,y2,t){
-      var x1 = x,
-          x2 = x+t;
-      return `La,${x1},${y1},${x2},${y2}\n`;
+   lineVer(x,yStart,yEnd,t){
+      var xStart = x, xEnd = x+t;
+      return `La,${xStart},${yStart},${xEnd},${yEnd}\n`;
+   }
+   addLineVer(x,yStart,yEnd,t){
+      this.labelCmd += this.lineVer(x,yStart,yEnd,t);
    }
 
    // Rectangle command drawing
-   rect(x1, y1, x2, y2, t){
-      return `R${x1},${y1},${x2},${y2},${t},${t}\n`;
+   rect(xStart, yStart, width, height, t){
+      return `R${xStart},${yStart},${xStart+width},${yStart+height},${t},${t}\n`;
+   }
+   addRect(xStart, yStart, xEnd, yEnd,t){
+      this.labelCmd += this.rect(xStart, yStart, xEnd, yEnd,t);
+   }
+
+   // Text command
+   text(text, x, y, w, h, style=0){
+      var styles = ['B', 'T', 'U'];
+      var line = "";
+      return `AT,${x},${y},${w},${h},1,0${styles[style]},0,0,${text}\n`;
+   }
+
+   addText(text, x, y, w, h, style=0){
+      this.labelCmd += this.text(text, x, y, w, h, style=0);
    }
 }
