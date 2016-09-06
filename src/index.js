@@ -1,10 +1,9 @@
 /*jshint esversion: 6 */
-import Label from './label';
-import Printer from './printer';
-import svg2ezpl from './svg2ezpl';
 
-export default {
-    Label: Label,
-    Printer: Printer,
-    svg2ezpl : svg2ezpl
-};
+import L from './label';
+import P from './printer';
+import S from './svglabel';
+
+export const Label = L;
+export const Printer = P;
+export const  SvgLabel = S;

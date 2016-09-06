@@ -4,6 +4,7 @@ label.js
 ========
 Contains methods that give GoDex EZPL commands for priting labels elements.
 */
+import _ from 'underscore';
 
 export default class Label{
    constructor({  speed= 2,
@@ -90,18 +91,29 @@ export default class Label{
    rect(xStart, yStart, width, height, t){
       return `R${xStart},${yStart},${xStart+width},${yStart+height},${t},${t}\n`;
    }
-   addRect(xStart, yStart, xEnd, yEnd,t){
+   addRect(xStart, yStart, xEnd, yEnd, t){
       this.labelCmd += this.rect(xStart, yStart, xEnd, yEnd,t);
    }
 
    // Text command
-   text(text, x, y, w, h, style=0){
-      var styles = ['B', 'T', 'U'];
-      var line = "";
-      return `AT,${x},${y},${w},${h},1,0${styles[style]},0,0,${text}\n`;
+   text(text, x, y, s){
+      var i = [6, 8, 10, 12, 14, 18, 24, 30];
+      var j = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+      var k = _.map(i, function(num){ return Math.abs(num - s); });
+      var l = _.lastIndexOf(k, _.min(k));
+      return "A" + j[l] + "," + x + "," + y + ",1,1,1,0,"+ text + "\n";
    }
 
-   addText(text, x, y, w, h, style=0){
-      this.labelCmd += this.text(text, x, y, w, h, style=0);
+   addText(text, x, y, s, style=0){
+      this.labelCmd += this.text(text, x, y, s, style=0);
+   }
+
+   barcode(type, x, y, narrow, width, height, rotation, readable, data){
+      var barType = {'CODE39': 'A', 'EAN8': 'B', 'EAN13':'E', 'UPCA':'H', 'UPCE':'K', 'CODE93':'P', 'CODE128':'Q'};
+      return `B${barType[type]},${x},${y},${narrow},${width},${height},${rotation},${readable},${data}\n`;
+   }
+
+   addBarcode(type, x, y, narrow, width, height, rotation, readable, data){
+      this.labelCmd += this.barcode(type, x, y, narrow, width, height, rotation, readable, data);
    }
 }

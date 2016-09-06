@@ -12,16 +12,9 @@ var eventEmitter = new events.EventEmitter();
 export default class Printer{
 
    //config : {port: 'COM2', baud: '9600'}
-   constructor(config){
-
-      this.port = 'COM2';
+   constructor({port= null} = {}){
+      this.port = port;
       this.baud = 9600;
-      if(config){
-         // Serial port
-         this.port = config.port || this.port;
-         // Baud rate
-         this.baud = config.baud || this.baud;
-      }
       // Printer status
       this.status = { '00': 'Ready', '01': 'Media Empty or Media Jam', '02': 'Media Empty or Media Jam', '03': 'Ribbon Empty',
                       '04': 'Door Open', '05': 'Rewinder Full', '06': 'File System Full', '07': 'Filename Not Found',
@@ -29,6 +22,7 @@ export default class Printer{
 
       this.isPrinting = false;
       this.queue = [];
+      this.sp = null;
    }
 
    // Set serial port
@@ -36,23 +30,19 @@ export default class Printer{
       this.port = port;
    }
 
-   // Push a print task to queue
-   addPrintTask(task){
-      this.queue.push(task);
-      this.nextTask();
+   start(){
+      this.sp = new SerialPort(this.port, { baudrate: this.baud, parser: SerialPort.parsers.readline('\n')}, function(err){
+         if(err)
+            console.error(err);
+         else{
+            this.nextPrintTask();
+         }
+      }.bind(this));
    }
 
-   // Run next task
-   nextTask(){
-      // If not printing
-      if(!this.isPrinting){
-         // If task leftover in queue
-         if(this.queue.length > 0){
-            this.print(this.queue.splice(0,1)[0], function(result){
-               console.log(result);
-            });
-         }
-      }
+   stop(){
+      if(this.sp && this.sp.isOpen())
+         this.sp.close();
    }
 
    // Get list of serial ports
@@ -63,6 +53,28 @@ export default class Printer{
             portList = ports;
          callback(portList);
       });
+   }
+
+   // Push a print task to queue
+   addPrintTask(task){
+      this.queue.push(task);
+      this.nextPrintTask();
+   }
+
+   // Run next task
+   nextPrintTask(){
+      if(this.sp && this.sp.isOpen()){
+         // If not printing
+         if(!this.isPrinting){
+            // If task leftover in queue
+            if(this.queue.length > 0){
+               this.print(this.queue.splice(0,1)[0], function(err, message){
+                  if(err)
+                     console.error(message);
+               }.bind(this));
+            }
+         }
+      }
    }
 
    // Test print
@@ -77,17 +89,15 @@ export default class Printer{
 
    // Get printer status
    getPrinterStatus(callback){
-      var sp = new SerialPort(this.settings.port, {baudrate: 9600, parser: SerialPort.parsers.readline('\n')}, false);
-      // Opern serial connection
-      sp.open(function (error) {
-         if(error){
+      var sp = new SerialPort(this.port, {baudrate: 9600, parser: SerialPort.parsers.readline('\n')}, function(err){
+         if(err){
             callback({error: -1, message: "Error opening COM port. Please check if printer is connected."});
          }
-         else {
+         else{
             // On serial data received
             sp.on('data', function (data) {
                var d = data.replace('\r', '');
-               callback(this.status[d]);
+               callback(this.status [d]);
                sp.close();
             }.bind(this));
             // Write to serial
@@ -98,23 +108,20 @@ export default class Printer{
    }
 
    print(command, callback){
-      if(!this.isPrinting){
-         this.isPrinting = true;
-         var sp = new SerialPort(this.port, {baudrate: this.baud}, function(err){
-            if(err){
-               callback({error: -1, message: `Error opening port: ${this.port}. Check if printer is connected.`});
-               this.isPrinting = false;
-               this.nextTask();
-            }
-            else {
-               sp.write(command, function(err, results){
-                  sp.close();
-                  callback("Printing done");
+      if(this.sp.isOpen()){
+         if(!this.isPrinting){
+            this.isPrinting = true;
+            this.sp.write(command, function(){
+               this.sp.drain(function(){
                   this.isPrinting = false;
-                  this.nextTask();
+                  this.nextPrintTask();
+                  callback();
                }.bind(this));
-            }
-         }.bind(this));
+            }.bind(this));
+         }
+      }
+      else{
+         callback(-1, "No port open");
       }
    }
 }

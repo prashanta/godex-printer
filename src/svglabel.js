@@ -44,14 +44,14 @@ export default class SvgLabel extends Label{
          else if(name == "text"){
             // Barcode
             if(child.content.indexOf("#BA#") >= 0)
-               result += this.svgBarCode(child.content, att, data);
+               result += this.svgBarcode(child.content, att);
             // Date
             else if(child.content.indexOf("#DATE#") >= 0){
-               result += this.svgText(moment().format('DD-MMM-YY'), att, data);
+               result += this.svgText(moment().format('DD-MMM-YY'), att);
             }
             // Normal Text
             else
-               result += this.svgText(child.content, att, data);
+               result += this.svgText(child.content, att);
          }
       }, this);
       return super.getPrintCommand() ;
@@ -86,5 +86,29 @@ export default class SvgLabel extends Label{
       var height = att.height * this.toDot;
       var t = Math.floor(att['stroke-width'] * this.toDot);
       this.addRect(xStart, yStart, width, height, t);
+   }
+
+   svgBarcode(content, att){
+      var type = att['data-barcode-type'];
+      var val = content;
+      _.each(_.keys(this.data), function(key){
+         val = val.replace("#BA#-"+ key, this.data[key]);
+      }.bind(this));
+      var x = att.x * this.toDot;
+      var fs = att["font-size"] * 1 * this.toDot;
+      var y = (att.y * 1 * this.toDot) - fs ;
+      this.addBarcode(type, x, y, 2, 4, fs, 0, 0, val);
+   }
+
+   svgText(content, att){
+      var val = content;
+      _.each(_.keys(this.data), function(key){
+         val = val.replace("{"+ key +"}", this.data[key]);
+      }.bind(this));
+      var fs = att["font-size"];
+      var x = att.x * this.toDot;
+      var y = (att.y - fs) * this.toDot;
+      fs = Math.floor(fs * 3.75);
+      this.addText(val, x, y, fs);
    }
 }
