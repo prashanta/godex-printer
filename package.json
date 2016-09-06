@@ -1,11 +1,12 @@
 {
   "name": "godex-printer",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Node module for sending commands to GoDex label printers.",
   "main": "lib/index.js",
   "scripts": {
     "test": "mocha -w --compilers js:babel-register",
-    "build": "rimraf lib; node_modules\\.bin\\babel src -d lib "
+    "prebuild": "rimraf lib",
+    "build": "node_modules/.bin/babel src -d lib "
   },
   "repository": {
     "type": "git",
