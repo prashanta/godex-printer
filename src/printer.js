@@ -5,14 +5,14 @@ printer.js
 A module to control GoDex printer.
 */
 import SerialPort from 'serialport';
-import events     from 'events';
+import EventEmitter from 'events';
+import Label from './label';
 
-var eventEmitter = new events.EventEmitter();
-
-export default class Printer{
+export default class Printer extends EventEmitter{
 
    //config : {port: 'COM2', baud: '9600'}
    constructor({port= null} = {}){
+      super();
       this.port = port;
       this.baud = 9600;
       // Printer status
@@ -30,10 +30,14 @@ export default class Printer{
       this.port = port;
    }
 
-   start(){
+   start(cb){
       this.sp = new SerialPort(this.port, { baudrate: this.baud, parser: SerialPort.parsers.readline('\n')}, function(err){
-         if(err)
-            console.error(err);
+         if(err){
+            if(cb)
+               cb(err);
+            else
+               this.emit('error', err);
+         }
          else{
             this.nextPrintTask();
          }
@@ -53,6 +57,15 @@ export default class Printer{
             portList = ports;
          callback(portList);
       });
+   }
+
+   // Push a print task to queue
+   printLabel(label){
+      if(label instanceof Label){
+         console.log("Added label " + label);
+         this.queue.push(label.getPrintCommand());
+         this.nextPrintTask();
+      }
    }
 
    // Push a print task to queue
@@ -124,4 +137,5 @@ export default class Printer{
          callback(-1, "No port open");
       }
    }
+   
 }

@@ -3,10 +3,13 @@
 import chai from 'chai';
 import Printer from './../src/printer';
 import Label from './../src/label';
+import Svg from './../src/svglabel';
 
 var expect = chai.expect;
 var printer = new Printer();
 var label = new Label();
+var svg = new Svg(__dirname+'./../example/L01.svg');
+
 describe('GoDex Printer', function(){
 
    describe("Label commands", function(){

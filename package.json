@@ -16,7 +16,8 @@
     "GoDex",
     "printer",
     "barcode",
-    "label"
+    "label",
+    "svg"
   ],
   "author": "Prashanta Shrestha <pmshrestha@gmail.com>",
   "license": "MIT",

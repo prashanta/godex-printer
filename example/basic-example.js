@@ -3,7 +3,11 @@
 import {Printer, Label, SvgLabel} from '../src/index';
 
 var p = new Printer({port: 'COM3'});
-p.start();
+p.on('error', function(err){
+   console.log(err);
+});
+//p.start();
+
 
 
 var label1 = new Label();
@@ -19,8 +23,9 @@ var label3 = new Label();
 label3.addRect(5, 5, 50, 50, 2);
 label3.addText("Partner", 10, 10, 20, 1);
 
-p.addPrintTask(label1.getPrintCommand());
+p.printLabel(label1);
+//p.addPrintTask(label1.getPrintCommand());
 p.addPrintTask(label2.getPrintCommand());
 p.addPrintTask(label3.getPrintCommand());
 
-p.stop();
+//p.stop();

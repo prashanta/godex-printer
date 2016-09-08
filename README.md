@@ -1,6 +1,6 @@
 # godex-printer
 
-Sends EZPL print commands to GoDex label printer via serial port. Uses SVG as template for labels. For more information on GoDex's EZPL go [here](http://www.godexintl.com/EN/download/downloads/list/Manuals). 
+Sends EZPL print commands to GoDex label printer via serial port. Uses SVG as template for labels. For more information on GoDex's EZPL go [here](http://www.godexintl.com/EN/download/downloads/list/Manuals).
 
 ---
 
@@ -15,7 +15,7 @@ npm install godex-printer
 #### __Quick Start__
 
 ```javascript
-// Import necessary moudles
+// Import necessary modules
 import {Printer, Label} from 'godex-printer';
 
 var printer = new Printer({port:'COM2'}); // Create a new printer

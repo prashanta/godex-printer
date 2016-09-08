@@ -49,15 +49,16 @@ export default class Label{
          startPos : x=>{this.config.startPos = x;},
          copies: x=>{this.config.copies = x;}
       };
-      this.labelCmd = '';
+      // Hold list of babel elements
+      this.labelEle = [];
    }
 
-   addLabelCmd(command){
+   addLabelElement(element){
       if(command)
-         this.labelCmd += command;
+         this.labelEle.push(element);
    }
 
-   getPrintCommand(mode = 0){
+   getPrintCommandPrefix(mode=0){
       var prefix =  this.cmd.speed() +
                      this.cmd.darkness() +
                      this.cmd.leftMargin() +
@@ -67,7 +68,11 @@ export default class Label{
                      this.cmd.startPos() +
                      this.cmd.copies() +
                      (mode===0? this.cmd.startLabelNormal() : (mode===1? this.cmd.startLabelInverse() : this.cmd.startLabelMirror()));
-      return prefix + this.labelCmd + this.cmd.end();
+      return prefix;
+   }
+
+   getPrintCommand(){
+      return this.getPrintCommandPrefix() + this.labelCmd + this.cmd.end();
    }
    // Horizontal line commmand
    lineHor(xStart,xEnd,y,t){
