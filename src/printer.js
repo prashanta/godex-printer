@@ -11,9 +11,10 @@ import Label from './label';
 export default class Printer extends EventEmitter{
 
    //config : {port: 'COM2', baud: '9600'}
-   constructor({port= null} = {}){
+   constructor({port= null, dpi=203} = {}){
       super();
       this.port = port;
+      this.dpi = dpi;
       this.baud = 9600;
       // Printer status
       this.status = { '00': 'Ready', '01': 'Media Empty or Media Jam', '02': 'Media Empty or Media Jam', '03': 'Ribbon Empty',
@@ -63,7 +64,7 @@ export default class Printer extends EventEmitter{
    printLabel(label){
       if(label instanceof Label){
          console.log("Added label " + label);
-         this.queue.push(label.getPrintCommand());
+         this.queue.push(label.getPrintCommand(this.dpi));
          this.nextPrintTask();
       }
    }
@@ -137,5 +138,5 @@ export default class Printer extends EventEmitter{
          callback(-1, "No port open");
       }
    }
-   
+
 }

@@ -9,12 +9,14 @@ import _ from 'underscore';
 export default class Element{
 
    constructor(){
+      this.dpi = 203;
    }
 
-   toDot(val, dpi){
-      return Math.ceil(val * (dpi/25.4));
+   toDot(val){
+      return Math.ceil(val * (this.dpi/25.4));
    }
 
-   getPrintCommand(){
+   getPrintCommand(dpi){
+      this.dpi = dpi;
    }
 }

@@ -19,12 +19,12 @@ export default class Rectangle extends Element{
    }
 
    getPrintCommand(dpi=203){
-      super();
-      var   xStartDot = this.toDot(this.xStart, dpi),
-            yStartDot = this.toDot(this.yStart, dpi),
-            yWidthDot = this.toDot(this.width, dpi),
-            yHeightDot = this.toDot(this.height, dpi),
-            thickDot = this.toDot(this.thick, dpi);
+      super(dpi);
+      var   xStartDot = this.toDot(this.xStart),
+            yStartDot = this.toDot(this.yStart),
+            yWidthDot = this.toDot(this.width),
+            yHeightDot = this.toDot(this.height),
+            thickDot = this.toDot(this.thick);
 
       return `R${xStartDot},${yStartDot},${xStartDot+widthDot},${yStartDot + heightDot},${thickDot},${thickDot}\n`;
    }
