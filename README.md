@@ -49,20 +49,19 @@ ___Note:___ All units are in dots (dot as in dpi. For 203 dpi printer 1mm = 8 do
 #### __Label template in SVG__
 
 ```javascript
-import {Printer, SvgLabel} from '../src/index';
+import {Printer, SvgLabel} from 'godex-printer';
 
 var printer = new Printer();
 printer.start('COM4')
 .then(function(){
-   var svgLabel = new SvgLabel(__dirname+'/L01.svg', {'PartNo':7188, 'uom': 'pcs', 'Qty': 122});
+   var svgLabel = new SvgLabel(__dirname+'/L01.svg', {'PartNo':7188, 'uom': 'pcs', 'Qty': 122, 'Bin': 'BXR109'});
    // Deprecated -> printer.addPrintTask(svgLabel.getPrintCommand());
+   printer.printLabel(svgLabel);
    printer.on("printQueueEmpty", function(){
       console.log("Everything printed");
       printer.stop();
    });
 });
-
-
 ```
 
 SVG template file contains:
