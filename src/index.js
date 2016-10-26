@@ -6,4 +6,4 @@ import S from './svglabel';
 
 export const Label = L;
 export const Printer = P;
-export const  SvgLabel = S;
+export const SvgLabel = S;

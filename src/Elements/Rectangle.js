@@ -1,8 +1,8 @@
 /*jshint esversion: 6 */
 /*
-Element.js
-========
-Base class for all label elements
+Rectangle.js
+============
+Rectangle label element.
 */
 import _ from 'underscore';
 import Element from './Element';
@@ -19,13 +19,13 @@ export default class Rectangle extends Element{
    }
 
    getPrintCommand(dpi=203){
-      super(dpi);
+      super.getPrintCommand(dpi);
       var   xStartDot = this.toDot(this.xStart),
             yStartDot = this.toDot(this.yStart),
-            yWidthDot = this.toDot(this.width),
-            yHeightDot = this.toDot(this.height),
+            widthDot = this.toDot(this.width),
+            heightDot = this.toDot(this.height),
             thickDot = this.toDot(this.thick);
 
-      return `R${xStartDot},${yStartDot},${xStartDot+widthDot},${yStartDot + heightDot},${thickDot},${thickDot}\n`;
+      return `R${xStartDot},${yStartDot},${xStartDot + widthDot},${yStartDot + heightDot},${thickDot},${thickDot}\n`;
    }
 }

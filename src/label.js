@@ -6,52 +6,49 @@ Contains methods that give GoDex EZPL commands for priting labels elements.
 */
 import _ from 'underscore';
 import Element from './elements/Element';
+import Rect from './elements/Rectangle';
+import LineHor from './elements/LineHor';
+import LineVer from './elements/LineVer';
+import Text from './elements/Text';
+import Barcode from './elements/Barcode';
 
 export default class Label{
-   constructor({  speed= 2,
-                  darkness= 5,
-                  leftMargin= 26,
-                  rotate= 150,
-                  rowOffset= -25,
-                  width= 80,
-                  length= 52,
-                  gap= 2,
-                  startPos= 20,
-                  copies= 1} = {}){
+   constructor(copies = 1, width = 80, height = 52, gap = 2, leftMargin= 26, rowOffset= -15, startPos= 20){
 
-      this.config = {speed: speed, darkness: darkness, leftMargin: leftMargin, rotate: rotate, rowOffset: rowOffset, width: width, length: length, gap: gap, startPos: startPos, copies: copies};
+      this.copies = 1;
+      this.width = width;
+      this.height = height;
+      this.gap = gap;
+      this.leftMargin = leftMargin;
+      this.rowOffset = rowOffset;
+      this.startPos = startPos;
+      // Hold list of babel elements
+      this.labelEle = [];
 
+      this.set = {
+         copies: x=>{this.copies = x;}
+      };
 
       this.cmd = {
-         speed : ()=>{return `^S${this.config.speed}\n`;},
-         darkness: ()=>{return `^H${this.config.darkness}\n`;},
-         leftMargin: ()=>{return `^R${this.config.leftMargin}\n`;},
-         rotate: ()=>{return `~R${this.config.rotate}\n`;},
-         rowOffset: ()=>{return `~Q${this.config.rowOffset}\n`;},
-         labelDim: ()=>{return `^W${this.config.width}\n^Q${this.config.length},${this.config.gap}\n`;},
-         startPos: ()=>{return `^E${this.config.startPos}\n`;},
-         copies: ()=>{return `^C${this.config.copies}\n`;},
-
+         copies: ()=>{return `^C${this.copies}\n`;},
+         labelDim: ()=>{return `^W${this.width}\n^Q${this.height},${this.gap}\n`;},
+         leftMargin: ()=>{return `^R${this.leftMargin}\n`;},
+         rowOffset: ()=>{return `~Q${this.rowOffset}\n`;},
+         startPos: ()=>{return `^E${this.startPos}\n`;},
          startLabelNormal: ()=>{return '^L\n';},   // if mode = 0 || undefined
          startLabelInverse: ()=>{return '^LI\n';}, // if mode = 1
-         startLabelMirror: ()=>{return '^LM\n';},  // if mode = 2
-         end: ()=>{return 'E\n';}
+         startLabelMirror: ()=>{return '^LM\n';}  // if mode = 2
       };
 
       this.set = {
-         speed : x=>{this.config.speed = x;},
-         darkness : x=>{this.config.darkness = x;},
-         leftMargin : x=>{this.config.leftMargin = x;},
-         rotate : x=>{this.config.rotate = x;},
-         rowOffset : x=>{this.config.rowOffset = x;},
-         width : x=>{ this.config.width = x;},
-         length : x=>{this.config.length = x;},
-         gap : x=>{this.config.gap = x;},
-         startPos : x=>{this.config.startPos = x;},
-         copies: x=>{this.config.copies = x;}
+         copies : x=>{this.copies = x;},
+         width : x=>{ this.width = x;},
+         height : x=>{this.height = x;},
+         gap : x=>{this.gap = x;},
+         leftMargin : x=>{this.leftMargin = x;},
+         rowOffset : x=>{this.rowOffset = x;},
+         startPos : x=>{this.startPos = x;}
       };
-      // Hold list of babel elements
-      this.labelEle = [];
    }
 
    addLabelElement(element){
@@ -59,26 +56,42 @@ export default class Label{
          this.labelEle.push(element);
    }
 
-
-   getPrintCommandPrefix(mode=0){
-      var prefix =  this.cmd.speed() +
-                     this.cmd.darkness() +
-                     this.cmd.leftMargin() +
-                     this.cmd.rotate() +
-                     this.cmd.rowOffset() +
-                     this.cmd.labelDim() +
-                     this.cmd.startPos() +
-                     this.cmd.copies() +
-                     (mode===0? this.cmd.startLabelNormal() : (mode===1? this.cmd.startLabelInverse() : this.cmd.startLabelMirror()));
-      return prefix;
+   // Horizontal line commmand
+   addLineHor(xStart,xEnd,y,t){
+      this.addLabelElement(new LineHor(xStart,xEnd,y,t));
    }
 
-   getPrintCommand(dpi){
-      var cmd = this.getPrintCommandPrefix();
+   addLineVer(x,yStart,yEnd,t){
+      this.addLabelElement(new LineVer(x,yStart,yEnd,t));
+   }
+
+   addRect(xStart, yStart, width, height, t){
+      this.addLabelElement(new Rect(xStart, yStart, width, height, t));
+   }
+
+   // Text command
+   addText(text, xStart, yStart, size){
+      this.addLabelElement(new Text(text, xStart, yStart, size));
+   }
+
+   addBarcode(type, x, y, narrow, width, height, data){
+      this.addLabelElement(new Barcode(type, x, y, narrow, width, height, 0, 0, data));
+   }
+
+   getPrintCommand(dpi=203, mode = 0){
+      var cmd = "";
       for(var element of this.labelEle){
          cmd += element.getPrintCommand(dpi);
       }
-      cmd += this.cmd.end();
       return cmd;
+   }
+
+   getPrintCommandPrefix(mode=0){
+      var prefix =   this.cmd.copies() +
+                     (mode===0? this.cmd.startLabelNormal() : (mode===1? this.cmd.startLabelInverse() : this.cmd.startLabelMirror())) + this.cmd.labelDim() +
+                     this.cmd.leftMargin() +
+                     this.cmd.rowOffset() +
+                     this.cmd.startPos();
+      return prefix;
    }
 }

@@ -1,7 +1,7 @@
 /*jshint esversion: 6 */
 /*
 Element.js
-========
+==========
 Base class for all label elements
 */
 import _ from 'underscore';

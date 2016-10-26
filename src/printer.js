@@ -7,15 +7,43 @@ A module to control GoDex printer.
 import SerialPort from 'serialport';
 import EventEmitter from 'events';
 import Label from './label';
+import Promise from 'bluebird';
 
 export default class Printer extends EventEmitter{
 
-   //config : {port: 'COM2', baud: '9600'}
-   constructor({port= null, dpi=203} = {}){
+   constructor({port= null,
+               baud = 9600,
+               dpi=203,
+               speed= 4,
+               darkness= 6,
+               rotate= 150} = {}){
       super();
+
+      // Serail port name
       this.port = port;
+
+      // Serial port baud rate
+      this.baud = baud;
+
+      // Printer specific dot per inch
       this.dpi = dpi;
-      this.baud = 9600;
+
+      this.config = {speed: speed, darkness: darkness, rotate: rotate};
+
+
+      this.cmd = {
+         speed : ()=>{return `^S${this.config.speed}\n`;},
+         darkness: ()=>{return `^H${this.config.darkness}\n`;},
+         rotate: ()=>{return `~R${this.config.rotate}\n`;},
+         end: ()=>{return 'E\n';}
+      };
+
+      this.set = {
+         speed : x=>{this.config.speed = x;},
+         darkness : x=>{this.config.darkness = x;},
+         rotate : x=>{this.config.rotate = x;}
+      };
+
       // Printer status
       this.status = { '00': 'Ready', '01': 'Media Empty or Media Jam', '02': 'Media Empty or Media Jam', '03': 'Ribbon Empty',
                       '04': 'Door Open', '05': 'Rewinder Full', '06': 'File System Full', '07': 'Filename Not Found',
@@ -24,6 +52,17 @@ export default class Printer extends EventEmitter{
       this.isPrinting = false;
       this.queue = [];
       this.sp = null;
+
+      // Try to connect to port
+      if(this.port){
+         this.start()
+         .then(function(){
+            this.nextPrintTask();
+         }.bind(this))
+         .catch(function(err){
+            console.log(err.message);
+         });
+      }
    }
 
    // Set serial port
@@ -31,64 +70,90 @@ export default class Printer extends EventEmitter{
       this.port = port;
    }
 
-   start(cb){
-      this.sp = new SerialPort(this.port, { baudrate: this.baud, parser: SerialPort.parsers.readline('\n')}, function(err){
-         if(err){
-            if(cb)
-               cb(err);
-            else
-               this.emit('error', err);
+   // Start serial port
+   start(port){
+      return new Promise(function(resolve, reject){
+         this.port = port? port : this.port;
+         if((this.sp === null || !this.sp.isOpen()) && this.port){
+            this.sp = new SerialPort(this.port, { baudrate: this.baud, parser: SerialPort.parsers.readline('\n')}, function(err){
+               if(err)
+                  reject(err);
+               else
+                  resolve();
+            }.bind(this));
          }
          else{
-            this.nextPrintTask();
+            reject("Cannot open port");
          }
       }.bind(this));
    }
 
+   // Stop serial port
    stop(){
       if(this.sp && this.sp.isOpen())
          this.sp.close();
    }
 
    // Get list of serial ports
-   getPorts(callback){
-      var portList = [];
+   getPorts(callback, raw){
       SerialPort.list(function (err, ports) {
-         if(ports.length > 0)
-            portList = ports;
-         callback(portList);
+         if(err){
+            if(callback)
+               callback(err, null);
+         }
+         else{
+            if(!raw){
+               var portNames = [];
+               if(ports.length > 0)
+                  ports.forEach(function(port){ portNames.push(port.comName); });
+               callback(null, portNames);
+            }
+            else {
+               callback(null, ports);
+            }
+         }
       });
+   }
+
+   // Get list of serial ports synchronously
+   getPortsSync(raw){
+      return new Promise(function(resolve, reject){
+         SerialPort.list(function (err, ports) {
+            if(err)
+               reject();
+            else{
+               if(!raw){
+                  var portNames = [];
+                  if(ports.length > 0)
+                     ports.forEach(function(port){ portNames.push(port.comName); });
+                  resolve(portNames);
+               }
+               else{
+                  resolve(ports);
+               }
+            }
+         });
+      });
+   }
+
+   // DEPRECATED - Push a print task to queue
+   addPrintTask(task){
+      console.error("DEPRECATED: Printer.addPrintTask() depricated, use Printer.PrintLabel(Label) instead.");
    }
 
    // Push a print task to queue
    printLabel(label){
       if(label instanceof Label){
-         console.log("Added label " + label);
-         this.queue.push(label.getPrintCommand(this.dpi));
+         var cmd = this.getPrintCommandPrefix() + label.getPrintCommandPrefix() + label.getPrintCommand(this.dpi) + this.cmd.end();
+         this.queue.push(cmd);
          this.nextPrintTask();
       }
    }
 
-   // Push a print task to queue
-   addPrintTask(task){
-      this.queue.push(task);
+   // Push a raw print command to queue
+   printLabelRaw(command){
+      this.queue.push(command);
       this.nextPrintTask();
-   }
-
-   // Run next task
-   nextPrintTask(){
-      if(this.sp && this.sp.isOpen()){
-         // If not printing
-         if(!this.isPrinting){
-            // If task leftover in queue
-            if(this.queue.length > 0){
-               this.print(this.queue.splice(0,1)[0], function(err, message){
-                  if(err)
-                     console.error(message);
-               }.bind(this));
-            }
-         }
-      }
    }
 
    // Test print
@@ -101,42 +166,77 @@ export default class Printer extends EventEmitter{
       this.print('~T\n', callback);
    }
 
-   // Get printer status
-   getPrinterStatus(callback){
-      var sp = new SerialPort(this.port, {baudrate: 9600, parser: SerialPort.parsers.readline('\n')}, function(err){
-         if(err){
-            callback({error: -1, message: "Error opening COM port. Please check if printer is connected."});
-         }
-         else{
-            // On serial data received
-            sp.on('data', function (data) {
-               var d = data.replace('\r', '');
-               callback(this.status [d]);
-               sp.close();
-            }.bind(this));
-            // Write to serial
-            sp.write("^XSET,IMMEDIATE,1\n~S,CHECK\n", function(err, results){
-            });
-         }
-      }.bind(this));
+   // Calibrate printer
+   calibrate(callback){
+      this.print('~S,SENSOR\n', callback);
    }
 
+   // Factory reset printer
+   factoryReset(callback){
+      this.print('^Z\n', callback);
+   }
+
+   // Get printer status
+   getPrinterStatus(callback, flag){
+      if(this.sp && this.sp.isOpen()){
+         // On serial data received
+         this.sp.once('data', function(data){
+            var d = data.replace('\r', '');
+            if(callback)
+               callback(null, this.status[d]);
+         }.bind(this));
+         // Write to serial
+         this.sp.write("^XSET,IMMEDIATE,1\n~S,CHECK\n", function(err, results){
+         });
+      }
+      else{
+         if(callback)
+            callback(new Error("Port not started!"), null);
+      }
+   }
+
+   // Print next task in queue
+   nextPrintTask(){
+      // If serial port is open
+      if(this.sp && this.sp.isOpen()){
+         // If not printing and task leftover in queue
+         if(!this.isPrinting && this.queue.length > 0){
+            var task = this.queue.splice(0,1)[0];
+            this.print(task);
+         }
+         else{
+            this.emit('printQueueEmpty');
+         }
+      }
+   }
+
+   // Print
    print(command, callback){
+      // If serial port is open
       if(this.sp.isOpen()){
+         // If currently not printing
          if(!this.isPrinting){
             this.isPrinting = true;
             this.sp.write(command, function(){
                this.sp.drain(function(){
                   this.isPrinting = false;
                   this.nextPrintTask();
-                  callback();
+                  if(callback)
+                     callback(null);
                }.bind(this));
             }.bind(this));
          }
       }
       else{
-         callback(-1, "No port open");
+         if(callback)
+            callback(new Error("Port not open"));
       }
    }
 
+   getPrintCommandPrefix(mode=0){
+      var prefix =  this.cmd.speed() +
+                     this.cmd.darkness() +
+                     this.cmd.rotate();
+      return prefix;
+   }
 }

@@ -1,8 +1,8 @@
 /*jshint esversion: 6 */
 /*
-Element.js
-========
-Base class for all label elements
+LineVer.js
+==========
+Vertical line label element.
 */
 import _ from 'underscore';
 import Element from './Element';
@@ -20,7 +20,7 @@ export default class LineVer extends Element{
    }
 
    getPrintCommand(dpi=203){
-      super(dpi);
+      super.getPrintCommand(dpi);
       var   xStartDot = this.toDot(this.xStart),
             yStartDot = this.toDot(this.yStart),
             xEndDot = this.toDot(this.xEnd),

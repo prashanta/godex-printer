@@ -12,20 +12,24 @@ import _ from 'underscore';
 import moment from 'moment';
 
 export default class SvgLabel extends Label{
-   constructor(file, data, opts){
+   constructor(file, data, copies = 1){
       var xml = fs.readFileSync(file, 'utf8');
       var temp = parse(xml);
-      super({
-         width: temp.root.attributes.width.replace("mm", ""),
-         length: temp.root.attributes.height.replace("mm", "")
-      });
+      super(
+         copies,
+         temp.root.attributes.width.replace("mm", ""),
+         temp.root.attributes.height.replace("mm", ""),
+         temp.root.attributes.labelGap.replace("mm", ""),
+         temp.root.attributes.leftMargin.replace("mm", ""),
+         temp.root.attributes.rowOffset.replace("mm", ""),
+         temp.root.attributes.startPos.replace("mm", "")
+      );
       this.svg = temp;
       this.data = data;
       this.toDot = 8;
    }
 
    getPrintCommand(){
-      var result = "";
       _.each(this.svg.root.children, function(child) {
          var att = child.attributes;
          var name = child.name;
@@ -44,14 +48,14 @@ export default class SvgLabel extends Label{
          else if(name == "text"){
             // Barcode
             if(child.content.indexOf("#BA#") >= 0)
-               result += this.svgBarcode(child.content, att);
+               this.svgBarcode(child.content, att);
             // Date
             else if(child.content.indexOf("#DATE#") >= 0){
-               result += this.svgText(moment().format('DD-MMM-YY'), att);
+               this.svgText(moment().format('DD-MMM-YY'), att);
             }
             // Normal Text
             else
-               result += this.svgText(child.content, att);
+               this.svgText(child.content, att);
          }
       }, this);
       return super.getPrintCommand() ;
@@ -62,29 +66,28 @@ export default class SvgLabel extends Label{
    */
    svgLine(att){
       if((att.x1 == att.x2) && (att.y1 != att.y2)){
-         var x = att.x * this.toDot,
-             yStart = att.y1*this.toDot,
-             yEnd = att.y2*this.toDot,
-             tv = att['stroke-width']*this.toDot;
+         var x = parseFloat(att.x1),
+             yStart = parseFloat(att.y1),
+             yEnd = parseFloat(att.y2),
+             tv = parseFloat(att['stroke-width']);
+
          this.addLineVer(x, yStart, yEnd, tv);
       }
       else if((att.y1 == att.y2) && (att.x1 != att.x2)){
-         var xStart = att.x1 * this.toDot,
-             xEnd = att.x2*this.toDot,
-             y = att.y1*this.toDot,
-             th = att['stroke-width']*this.toDot;
+         var xStart = parseFloat(att.x1),
+             xEnd = parseFloat(att.x2),
+             y = parseFloat(att.y1),
+             th = parseFloat(att['stroke-width']);
          this.addLineHor(xStart, xEnd, y, th);
       }
-      else
-         return "";
    }
 
    svgRect(att){
-      var xStart = att.x * this.toDot;
-      var yStart = att.y * this.toDot;
-      var width = att.width * this.toDot;
-      var height = att.height * this.toDot;
-      var t = Math.floor(att['stroke-width'] * this.toDot);
+      var xStart = parseFloat(att.x);
+      var yStart = parseFloat(att.y);
+      var width = parseFloat(att.width);
+      var height = parseFloat(att.height);
+      var t = parseFloat(att['stroke-width']);
       this.addRect(xStart, yStart, width, height, t);
    }
 
@@ -94,10 +97,10 @@ export default class SvgLabel extends Label{
       _.each(_.keys(this.data), function(key){
          val = val.replace("#BA#-"+ key, this.data[key]);
       }.bind(this));
-      var x = att.x * this.toDot;
-      var fs = att["font-size"] * 1 * this.toDot;
-      var y = (att.y * 1 * this.toDot) - fs ;
-      this.addBarcode(type, x, y, 2, 4, fs, 0, 0, val);
+      var x = parseFloat(att.x);
+      var fs = parseFloat(att["font-size"]);
+      var y = parseFloat(att.y) - fs ;
+      this.addBarcode(type, x, y, 0.2, 0.75, fs, val);
    }
 
    svgText(content, att){
@@ -105,10 +108,9 @@ export default class SvgLabel extends Label{
       _.each(_.keys(this.data), function(key){
          val = val.replace("{"+ key +"}", this.data[key]);
       }.bind(this));
-      var fs = att["font-size"];
-      var x = att.x * this.toDot;
-      var y = (att.y - fs) * this.toDot;
-      fs = Math.floor(fs * 3.75);
+      var fs = parseFloat(att["font-size"]);
+      var x = parseFloat(att.x);
+      var y = parseFloat(att.y) - fs;
       this.addText(val, x, y, fs);
    }
 }

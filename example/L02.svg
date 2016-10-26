@@ -1,0 +1,23 @@
+<svg width="55mm" height="25mm" data-gap="3" data-width="55" labelGap="2" leftMargin= "26" rowOffset= "-5" startPos= "20" style="border: 1px solid #CCC" data-template-name="test">
+  	<rect x="0mm" y="0mm" width="48mm" height="24mm" style="stroke: #000000; fill: none;" stroke-width="0.3mm" />
+
+	<line x1="0mm" y1="6mm" x2="48mm" y2="6mm" stroke="red" stroke-width="0.25mm" fill="none" />
+  	<line x1="0mm" y1="12mm" x2="48mm" y2="12mm" stroke="red" stroke-width="0.25mm" fill="none" />
+  	<line x1="0mm" y1="18mm" x2="48mm" y2="18mm" stroke="red" stroke-width="0.25mm" fill="none" />
+
+  	<line x1="14mm" y1="0mm" x2="14mm" y2="18mm"stroke="red" stroke-width="0.25mm" fill="none" />
+
+
+    <text x="1mm" y="4mm" font-size= "3mm">Part</text>
+    <text x="15mm" y="4mm" font-size= "3mm">{partno}</text>
+
+    <text x="1mm" y="10mm" font-size= "3mm">QTY</text>
+    <text x="15mm" y="10mm" font-size= "3mm">{qty}</text>
+  	<text x="35mm" y="10mm" font-size= "3mm">{uom}</text>
+
+  	<text x="1mm" y="16mm" font-size= "3mm">BIN</text>
+    <text x="15mm" y="16mm" font-size= "3mm">{bin}</text>
+
+  	<text x="1mm" y="22mm" font-size= "3mm">{code}</text>
+
+</svg>
