@@ -11,7 +11,7 @@ import {Text, Rectangle, LineHor, LineVer, Barcode} from './../src/elements';
 var expect = chai.expect;
 var printer = new Printer();
 var label = new Label();
-var svg = new Svg(__dirname+'./../example/L01.svg', {'PartNo':9019921, 'uom': 'PCS', 'Qty': 19, 'Bin':'LX000'});
+var svg = new Svg(__dirname+'/../example/L01.svg', {'PartNo':9019921, 'uom': 'PCS', 'Qty': 19, 'Bin':'LX000'});
 
 describe('GoDex Printer', function(){
 

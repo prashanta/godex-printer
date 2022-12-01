@@ -4,7 +4,7 @@ printer.js
 ==========
 A module to control GoDex printer.
 */
-import SerialPort from 'serialport';
+import {SerialPort} from 'serialport';
 import EventEmitter from 'events';
 import Label from './label';
 import Promise from 'bluebird';
@@ -116,24 +116,18 @@ export default class Printer extends EventEmitter{
    }
 
    // Get list of serial ports synchronously
-   getPortsSync(raw){
-      return new Promise(function(resolve, reject){
-         SerialPort.list(function (err, ports) {
-            if(err)
-               reject();
-            else{
-               if(!raw){
-                  var portNames = [];
-                  if(ports.length > 0)
-                     ports.forEach(function(port){ portNames.push(port.comName); });
-                  resolve(portNames);
-               }
-               else{
-                  resolve(ports);
-               }
-            }
-         });
-      });
+   async getPortsSync(raw){
+      var ports = await SerialPort.list();
+      console.log(ports);
+      if(!raw){
+         var portNames = [];
+         if(ports.length > 0)
+            ports.forEach((port) => { portNames.push(port.path); });
+         return portNames;
+      }
+      else{
+         return ports;
+      }
    }
 
    // DEPRECATED - Push a print task to queue
