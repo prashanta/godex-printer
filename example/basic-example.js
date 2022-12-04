@@ -10,7 +10,7 @@ p.getPortsSync()
 .then(function(result){
    if(result.length > 0){
       console.log("Connecting to port  : " + result[0]);
-      p.setPort(result[0]);
+      p.setPort('/dev/tty.usbserial-FTVTFUMT');
       return p.start();
    }
    else {
