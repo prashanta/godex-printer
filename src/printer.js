@@ -9,6 +9,10 @@ import EventEmitter from 'events';
 import Label from './label';
 import Promise from 'bluebird';
 
+/**
+ * Class representing Printer
+ * @extends EventEmitter
+ */
 export default class Printer extends EventEmitter{
 
    constructor({port= null,
@@ -19,7 +23,7 @@ export default class Printer extends EventEmitter{
                rotate= 150} = {}){
       super();
 
-      // Serail port name
+      // Serial port name
       this.port = port;
 
       // Serial port baud rate
@@ -28,8 +32,7 @@ export default class Printer extends EventEmitter{
       // Printer specific dot per inch
       this.dpi = dpi;
 
-      this.config = {speed: speed, darkness: darkness, rotate: rotate};
-
+      this.config = {speed, darkness, rotate};
 
       this.cmd = {
          speed : ()=>{return `^S${this.config.speed}\n`;},
@@ -74,8 +77,8 @@ export default class Printer extends EventEmitter{
    start(port){
       return new Promise(function(resolve, reject){
          this.port = port? port : this.port;
-         if((this.sp === null || !this.sp.isOpen()) && this.port){
-            this.sp = new SerialPort(this.port, { baudrate: this.baud, parser: SerialPort.parsers.readline('\n')}, function(err){
+         if((this.sp === null || !this.sp.isOpen) && this.port){
+            this.sp = new SerialPort({path: this.port, baudRate: this.baud}, function(err){
                if(err)
                   reject(err);
                else
@@ -90,7 +93,7 @@ export default class Printer extends EventEmitter{
 
    // Stop serial port
    stop(){
-      if(this.sp && this.sp.isOpen())
+      if(this.sp && this.sp.isOpen)
          this.sp.close();
    }
 
@@ -172,7 +175,7 @@ export default class Printer extends EventEmitter{
 
    // Get printer status
    getPrinterStatus(callback, flag){
-      if(this.sp && this.sp.isOpen()){
+      if(this.sp && this.sp.isOpen){
          // On serial data received
          this.sp.once('data', function(data){
             var d = data.replace('\r', '');
@@ -192,7 +195,7 @@ export default class Printer extends EventEmitter{
    // Print next task in queue
    nextPrintTask(){
       // If serial port is open
-      if(this.sp && this.sp.isOpen()){
+      if(this.sp && this.sp.isOpen){
          // If not printing and task leftover in queue
          if(!this.isPrinting && this.queue.length > 0){
             var task = this.queue.splice(0,1)[0];
@@ -207,7 +210,7 @@ export default class Printer extends EventEmitter{
    // Print
    print(command, callback){
       // If serial port is open
-      if(this.sp.isOpen()){
+      if(this.sp.isOpen){
          // If currently not printing
          if(!this.isPrinting){
             this.isPrinting = true;
